@@ -8,6 +8,8 @@ from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from nltk.probability import FreqDist
 import nltk
+import math
+import random
 
 # Download necessary NLTK data
 nltk.download('punkt', quiet=True)
@@ -46,7 +48,7 @@ async def fetch_engineering_news():
                 print(f"Response content: {await response.text()}")
                 return None
 
-def summarize_text(text, num_sentences=3):
+def summarize_text(text, num_sentences=2):
     sentences = sent_tokenize(text)
     words = [word.lower() for sentence in sentences for word in sentence.split() if word.lower() not in stopwords.words('english')]
     freq_dist = FreqDist(words)
@@ -69,29 +71,64 @@ def print_articles(articles):
         print(f"Published at: {article['publishedAt']}")
         print("-" * 50)
 
+def calculate_reading_time(content):
+    clean_content = ''.join(char for char in content if char not in '<>')
+    word_count = len(clean_content.split())
+    reading_time_minutes = math.ceil(word_count / 200)
+    
+    if reading_time_minutes < 1:
+        return "< 1 min"
+    elif reading_time_minutes == 1:
+        return "1 min"
+    else:
+        return f"{reading_time_minutes} mins"
+
+def get_random_emoji():
+    ai_emojis = ["🤖", "🧠", "💡", "🔬", "🚀", "💻", "🔮", "🎛️", "🌐", "📊"]
+    return random.choice(ai_emojis)
+
 async def send_discord_message(articles):
     if not articles:
         return
 
-    embed = discord.Embed(
-        title="Latest AI and Prompt Engineering News",
-        color=discord.Color.blue(),
-        timestamp=datetime.utcnow()
-    )
-
-    for article in articles[:5]:  # Limit to 5 articles to avoid exceeding Discord's embed limits
-        summary = summarize_text(article['content'])
-        embed.add_field(
-            name=f"{article['source']['name']}: {article['title']}",
-            value=f"Summary: {summary[:200]}... [Read more]({article['url']})",
-            inline=False
-        )
-
-    embed.set_footer(text="Powered by NewsAPI")
-
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.from_url(DISCORD_WEBHOOK_URL, session=session)
-        await webhook.send(embed=embed)
+
+        main_embed = discord.Embed(
+            title=f"{get_random_emoji()} AI & Prompt Engineering News Roundup {get_random_emoji()}",
+            description="Dive into the latest breakthroughs and developments in AI and prompt engineering!",
+            color=discord.Color.from_rgb(75, 0, 130),  # Deep purple color
+            timestamp=datetime.utcnow()
+        )
+        main_embed.set_footer(text="Powered by NewsAPI | Updated daily", icon_url="https://newsapi.org/images/n-logo-border.png")
+
+        await webhook.send(embed=main_embed)
+
+        for index, article in enumerate(articles[:5], start=1):
+            summary = summarize_text(article['content'])
+            
+            source_emoji = {
+                'Forbes': "💼",
+                'TechRadar': "🖥️",
+                'WebProNews': "🌐"
+            }.get(article['source']['name'], "📰")
+
+            reading_time = calculate_reading_time(article['content'])
+            
+            article_embed = discord.Embed(
+                title=f"{source_emoji} {article['title']}",
+                url=article['url'],
+                description=f"{summary[:200]}...",
+                color=discord.Color.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            )
+            article_embed.add_field(name="Source", value=article['source']['name'], inline=True)
+            article_embed.add_field(name="Published", value=article['publishedAt'][:10], inline=True)
+            article_embed.add_field(name="Reading Time", value=f"⏱️ {reading_time}", inline=True)
+            
+            if article.get('urlToImage'):
+                article_embed.set_thumbnail(url=article['urlToImage'])
+
+            await webhook.send(embed=article_embed)
 
 async def main():
     if not NEWS_API_KEY or not DISCORD_WEBHOOK_URL:

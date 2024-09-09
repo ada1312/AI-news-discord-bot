@@ -5,7 +5,7 @@ This Discord bot fetches the latest news articles related to data engineering, p
 ## Features
 
 - Fetches news articles from NewsAPI
-- Filters articles by specified sources (Forbes, TechRadar, WebProNews, TechSpot)
+- Filters articles by specified sources (Forbes, TechRadar, WebProNews)
 - Sends the latest 5 articles to a Discord channel using a webhook
 - Runs asynchronously for improved performance
 
