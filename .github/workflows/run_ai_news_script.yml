@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'  # Specify Python version
 
@@ -27,10 +27,17 @@ jobs:
         python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 
     - name: Run script
-      env:
-        NEWS_API_KEY: 'placeholder_news_api_key'
-        DISCORD_WEBHOOK_URL: 'https://discord.com/api/webhooks/placeholder'
       run: |
-        echo "NEWS_API_KEY is set: true"
-        echo "DISCORD_WEBHOOK_URL is set: true"
+        if [ -n "${{ secrets.NEWS_API_KEY }}" ]; then
+          echo "NEWS_API_KEY is set"
+          export NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}"
+        else
+          echo "NEWS_API_KEY is not set"
+        fi
+        if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+          echo "DISCORD_WEBHOOK_URL is set"
+          export DISCORD_WEBHOOK_URL="${{ secrets.DISCORD_WEBHOOK_URL }}"
+        else
+          echo "DISCORD_WEBHOOK_URL is not set"
+        fi
         python paste.txt
