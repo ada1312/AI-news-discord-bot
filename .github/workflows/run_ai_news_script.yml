@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'  # Specify Python version
+        python-version: '3.11.9'  # Specify Python version 3.11.9
 
     - name: Install dependencies
       run: |
@@ -34,26 +34,29 @@ jobs:
         ls -la
 
     - name: Run script
+      env:
+        NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       run: |
-        if [ -n "${{ secrets.NEWS_API_KEY }}" ]; then
+        if [ -n "$NEWS_API_KEY" ]; then
           echo "NEWS_API_KEY is set"
-          export NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}"
         else
           echo "NEWS_API_KEY is not set"
+          exit 1
         fi
-        if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+        if [ -n "$DISCORD_WEBHOOK_URL" ]; then
           echo "DISCORD_WEBHOOK_URL is set"
-          export DISCORD_WEBHOOK_URL="${{ secrets.DISCORD_WEBHOOK_URL }}"
         else
           echo "DISCORD_WEBHOOK_URL is not set"
+          exit 1
         fi
         
-        # Check if paste.txt exists
-        if [ -f "paste.txt" ]; then
-          echo "paste.txt found, running script"
-          python paste.txt
+        # Check if main.py exists
+        if [ -f "main.py" ]; then
+          echo "main.py found, running script"
+          python main.py
         else
-          echo "Error: paste.txt not found"
+          echo "Error: main.py not found"
           echo "Python files in the current directory:"
           ls *.py
           exit 1
