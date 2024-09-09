@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'  # Specify Python version
+        python-version: '3.11'  # Specify Python version
 
     - name: Install dependencies
       run: |
@@ -25,6 +25,13 @@ jobs:
     - name: Download NLTK data
       run: |
         python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+
+    - name: Debug - List directory contents
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Contents of the current directory:"
+        ls -la
 
     - name: Run script
       run: |
@@ -40,4 +47,14 @@ jobs:
         else
           echo "DISCORD_WEBHOOK_URL is not set"
         fi
-        python paste.txt
+        
+        # Check if paste.txt exists
+        if [ -f "paste.txt" ]; then
+          echo "paste.txt found, running script"
+          python paste.txt
+        else
+          echo "Error: paste.txt not found"
+          echo "Python files in the current directory:"
+          ls *.py
+          exit 1
+        fi
