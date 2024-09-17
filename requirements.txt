@@ -3,3 +3,4 @@ asyncio
 dotenv
 discord
 requests
+beautifulsoup4
