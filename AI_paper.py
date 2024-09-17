@@ -13,7 +13,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 BASE_URL = os.getenv('BASE_URL')
-DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
+DISCORD_WEBHOOK_URL = os.getenv('DICORD_NEW_RESEARCH_CHANNEL_ID')
 
 MAX_MESSAGE_LENGTH = 2000
 
@@ -147,4 +147,3 @@ def scrape_and_send():
 
 if __name__ == "__main__":
     scrape_and_send()
-    
