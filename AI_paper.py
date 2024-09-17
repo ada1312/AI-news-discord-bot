@@ -13,7 +13,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 BASE_URL = os.getenv('BASE_URL')
-DISCORD_WEBHOOK_URL = os.getenv('DICORD_NEW_RESEARCH_CHANNEL_ID')
+DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
 
 MAX_MESSAGE_LENGTH = 2000
 
@@ -82,10 +82,10 @@ def get_next_page_link(soup):
 
 def format_paper_info(paper):
     links = (
-        f"[abstract]({paper['abstract_link']}) | "
-        f"[pdf]({paper['pdf_link']}) | "
-        f"[html]({paper['html_link']}) | "
-        f"[other]({paper['other_formats_link']})"
+        f"[abstract](<{paper['abstract_link']}>) | "
+        f"[pdf](<{paper['pdf_link']}>) | "
+        f"[html](<{paper['html_link']}>) | "
+        f"[other](<{paper['other_formats_link']}>)"
     )
     return (
         f"📄 **{paper['title']}**\n"
@@ -95,33 +95,34 @@ def format_paper_info(paper):
     )
 
 def send_discord_webhook(papers):
-    messages = []
-    current_message = f"# New ArXiv AI Research Papers\n*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n"
-    
+    header = f"# New ArXiv AI Research Papers\n*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n"
+    current_message = header
+
     for paper in papers:
         paper_info = format_paper_info(paper)
         if len(current_message) + len(paper_info) > MAX_MESSAGE_LENGTH:
-            # If adding this paper would exceed the limit, send the current message and start a new one
-            messages.append(current_message)
-            current_message = f"# New ArXiv AI Research Papers (Continued)\n\n{paper_info}"
+            # Send the current message before it exceeds the limit
+            send_chunk(current_message)
+            current_message = paper_info
         else:
             current_message += paper_info
 
+    # Send any remaining message
     if current_message:
-        messages.append(current_message)
+        send_chunk(current_message)
 
-    for message in messages:
-        try:
-            response = requests.post(DISCORD_WEBHOOK_URL, json={"content": message})
-            response.raise_for_status()
-            logging.info(f"Successfully sent message with {message.count('🆔')} papers. Character count: {len(message)}")
-        except requests.RequestException as e:
-            logging.error(f"Error sending Discord webhook: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                logging.error(f"Response status code: {e.response.status_code}")
-                logging.error(f"Response content: {e.response.text}")
-        
-        time.sleep(2)  # To avoid hitting Discord rate limits
+def send_chunk(chunk):
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json={"content": chunk})
+        response.raise_for_status()
+        logging.info(f"Successfully sent message chunk. Character count: {len(chunk)}")
+    except requests.RequestException as e:
+        logging.error(f"Error sending Discord webhook: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            logging.error(f"Response status code: {e.response.status_code}")
+            logging.error(f"Response content: {e.response.text}")
+    
+    time.sleep(2)  # To avoid hitting Discord rate limits
 
 def scrape_and_send():
     url = f"{BASE_URL}?show=2000"  # Start with showing 2000 results
