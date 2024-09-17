@@ -51,12 +51,12 @@ jobs:
           exit 1
         fi
         
-        # Check if main.py exists
-        if [ -f "main.py" ]; then
-          echo "main.py found, running script"
-          python main.py
+        # Check if discord_news_bot.py exists
+        if [ -f "discord_news_bot.py" ]; then
+          echo "discord_news_bot.py found, running script"
+          python madiscord_news_botin.py
         else
-          echo "Error: main.py not found"
+          echo "Error: discord_news_bot.py not found"
           echo "Python files in the current directory:"
           ls *.py
           exit 1

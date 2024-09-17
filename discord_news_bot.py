@@ -10,6 +10,10 @@ from nltk.probability import FreqDist
 import nltk
 import math
 import random
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Download necessary NLTK data
 nltk.download('punkt', quiet=True)
@@ -22,13 +26,14 @@ load_dotenv()
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
 DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
 
-# Specify the news sources we want
-ALLOWED_SOURCES = ['Forbes', 'TechRadar', 'WebProNews']
+# Specify the news sources and keywords we want
+ALLOWED_SOURCES = ['Forbes', 'TechCrunch', 'Wired', 'MIT Technology Review', 'VentureBeat']
+KEYWORDS = ['AI', 'artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'prompt engineering']
 
-async def fetch_engineering_news():
+async def fetch_ai_news():
     seven_days_ago = (datetime.now() - timedelta(7)).strftime('%Y-%m-%d')
     
-    url = f'https://newsapi.org/v2/everything?q=("AI" OR "artificial intelligence" OR "prompt engineering")&language=en&from={seven_days_ago}&sortBy=publishedAt&apiKey={NEWS_API_KEY}'
+    url = f'https://newsapi.org/v2/everything?q=({" OR ".join(KEYWORDS)})&language=en&from={seven_days_ago}&sortBy=relevancy&apiKey={NEWS_API_KEY}'
     
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -37,15 +42,16 @@ async def fetch_engineering_news():
                 if 'articles' in data:
                     filtered_articles = [
                         article for article in data['articles']
-                        if article['source']['name'] in ALLOWED_SOURCES
+                        if article['source']['name'] in ALLOWED_SOURCES and
+                        any(keyword.lower() in article['title'].lower() for keyword in KEYWORDS)
                     ]
                     return filtered_articles
                 else:
-                    print(f"Unexpected API response structure: {data}")
+                    logging.error(f"Unexpected API response structure: {data}")
                     return None
             else:
-                print(f"Error fetching news: {response.status}")
-                print(f"Response content: {await response.text()}")
+                logging.error(f"Error fetching news: {response.status}")
+                logging.error(f"Response content: {await response.text()}")
                 return None
 
 def summarize_text(text, num_sentences=2):
@@ -56,20 +62,6 @@ def summarize_text(text, num_sentences=2):
     summary_sentences = sorted(sentence_scores, key=sentence_scores.get, reverse=True)[:num_sentences]
     summary = ' '.join(summary_sentences)
     return summary
-
-def print_articles(articles):
-    if not articles:
-        print("No articles found from the specified sources on AI or prompt engineering.")
-        return
-
-    for article in articles:
-        print(f"\n--- Article from {article['source']['name']} ---")
-        print(f"Title: {article['title']}")
-        print(f"Description: {article['description']}")
-        print(f"Summary: {summarize_text(article['content'])}")
-        print(f"URL: {article['url']}")
-        print(f"Published at: {article['publishedAt']}")
-        print("-" * 50)
 
 def calculate_reading_time(content):
     clean_content = ''.join(char for char in content if char not in '<>')
@@ -83,9 +75,17 @@ def calculate_reading_time(content):
     else:
         return f"{reading_time_minutes} mins"
 
-def get_random_emoji():
-    ai_emojis = ["🤖", "🧠", "💡", "🔬", "🚀", "💻", "🔮", "🎛️", "🌐", "📊"]
-    return random.choice(ai_emojis)
+def get_news_emoji(title):
+    keywords = {
+        "research": "🔬", "breakthrough": "💡", "robot": "🤖", "language": "🗣️",
+        "vision": "👁️", "ethics": "🤔", "business": "💼", "health": "🏥",
+        "data": "📊", "cloud": "☁️", "security": "🔒", "innovation": "🚀",
+        "startup": "🌱", "investment": "💰", "education": "🎓", "future": "🔮"
+    }
+    for keyword, emoji in keywords.items():
+        if keyword in title.lower():
+            return emoji
+    return "🧠"  # Default AI-related emoji
 
 async def send_discord_message(articles):
     if not articles:
@@ -94,9 +94,10 @@ async def send_discord_message(articles):
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.from_url(DISCORD_WEBHOOK_URL, session=session)
 
+        header_emoji = random.choice(["🤖", "🧠", "💡", "🚀", "🔬", "💻", "🌐", "📊"])
         main_embed = discord.Embed(
-            title=f"{get_random_emoji()} AI & Prompt Engineering News Roundup {get_random_emoji()}",
-            description="Dive into the latest breakthroughs and developments in AI and prompt engineering!",
+            title=f"{header_emoji} AI News Roundup {header_emoji}",
+            description=f"📅 {datetime.now().strftime('%B %d, %Y')}\n\n🔥 **Top AI Stories:**",
             color=discord.Color.from_rgb(75, 0, 130),  # Deep purple color
             timestamp=datetime.utcnow()
         )
@@ -106,23 +107,16 @@ async def send_discord_message(articles):
 
         for index, article in enumerate(articles[:5], start=1):
             summary = summarize_text(article['content'])
-            
-            source_emoji = {
-                'Forbes': "💼",
-                'TechRadar': "🖥️",
-                'WebProNews': "🌐"
-            }.get(article['source']['name'], "📰")
-
             reading_time = calculate_reading_time(article['content'])
+            news_emoji = get_news_emoji(article['title'])
             
             article_embed = discord.Embed(
-                title=f"{source_emoji} {article['title']}",
+                title=f"{news_emoji} {article['title']}",
                 url=article['url'],
-                description=f"{summary[:200]}...",
+                description=f"{summary[:150]}...",
                 color=discord.Color.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
             )
             article_embed.add_field(name="Source", value=article['source']['name'], inline=True)
-            article_embed.add_field(name="Published", value=article['publishedAt'][:10], inline=True)
             article_embed.add_field(name="Reading Time", value=f"⏱️ {reading_time}", inline=True)
             
             if article.get('urlToImage'):
@@ -130,20 +124,26 @@ async def send_discord_message(articles):
 
             await webhook.send(embed=article_embed)
 
+        hashtags = "#AINews #ArtificialIntelligence #MachineLearning #TechInnovation"
+        footer_embed = discord.Embed(
+            description=f"{hashtags}\n\n💬 Want to discuss these stories? Join our AI community chat!\n🔔 Stay tuned for more AI updates!",
+            color=discord.Color.from_rgb(75, 0, 130)
+        )
+        await webhook.send(embed=footer_embed)
+
 async def main():
     if not NEWS_API_KEY or not DISCORD_WEBHOOK_URL:
-        print("Error: NEWS_API_KEY or DISCORD_WEBHOOK_URL is not set in the environment variables.")
+        logging.error("Error: NEWS_API_KEY or DISCORD_WEBHOOK_URL is not set in the environment variables.")
         return
 
-    news_articles = await fetch_engineering_news()
+    news_articles = await fetch_ai_news()
     
     if news_articles:
-        print(f"Found {len(news_articles)} articles on AI or prompt engineering from specified sources:")
-        print_articles(news_articles)
+        logging.info(f"Found {len(news_articles)} articles on AI from specified sources.")
         await send_discord_message(news_articles)
-        print("Message sent to Discord.")
+        logging.info("Message sent to Discord.")
     else:
-        print("No news articles found or error occurred.")
+        logging.warning("No news articles found or error occurred.")
 
 if __name__ == "__main__":
     asyncio.run(main())
