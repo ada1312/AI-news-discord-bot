@@ -1,4 +1,5 @@
 aiohttp
 asyncio
-dotenn
+dotenv
 discord
+requests
