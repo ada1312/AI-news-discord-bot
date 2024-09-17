@@ -13,7 +13,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 BASE_URL = os.getenv('BASE_URL')
-DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
+DISCORD_WEBHOOK_URL = os.getenv('DICORD_NEW_RESEARCH_CHANNEL_ID')
 
 MAX_MESSAGE_LENGTH = 2000
 
@@ -32,18 +32,15 @@ def extract_paper_info(dt, dd):
     # Extract arXiv ID and generate links
     abstract_link = dt.find('a', {'title': 'Abstract'})
     if abstract_link:
-        paper['id'] = abstract_link.text.strip()
+        paper['id'] = abstract_link.text.strip().replace('arXiv:', '')
         paper['abstract_link'] = f"https://arxiv.org/abs/{paper['id']}"
         paper['pdf_link'] = f"https://arxiv.org/pdf/{paper['id']}.pdf"
         paper['html_link'] = f"https://arxiv.org/html/{paper['id']}v1"
         paper['other_formats_link'] = f"https://arxiv.org/format/{paper['id']}"
     
-    # Extract title and authors
+    # Extract title
     title_div = dd.find('div', {'class': 'list-title'})
     paper['title'] = title_div.text.replace('Title:', '').strip() if title_div else ''
-    
-    authors_div = dd.find('div', {'class': 'list-authors'})
-    paper['authors'] = authors_div.text.replace('Authors:', '').strip() if authors_div else ''
     
     # Extract subjects
     subjects_div = dd.find('div', {'class': 'list-subjects'})
@@ -84,12 +81,16 @@ def get_next_page_link(soup):
     return None
 
 def format_paper_info(paper):
+    links = (
+        f"[abstract]({paper['abstract_link']}) | "
+        f"[pdf]({paper['pdf_link']}) | "
+        f"[html]({paper['html_link']}) | "
+        f"[other]({paper['other_formats_link']})"
+    )
     return (
         f"📄 **{paper['title']}**\n"
-        f"👥 {paper['authors']}\n"
         f"🆔 `{paper['id']}`\n"
-        f"🔗 [Abstract]({paper['abstract_link']}) | [PDF]({paper['pdf_link']}) | "
-        f"[HTML]({paper['html_link']}) | [Other]({paper['other_formats_link']})\n"
+        f"🔗 {links}\n"
         f"📚 {paper['subjects']}\n\n"
     )
 
@@ -100,9 +101,11 @@ def send_discord_webhook(papers):
     for paper in papers:
         paper_info = format_paper_info(paper)
         if len(current_message) + len(paper_info) > MAX_MESSAGE_LENGTH:
+            # If adding this paper would exceed the limit, send the current message and start a new one
             messages.append(current_message)
-            current_message = f"# New ArXiv AI Research Papers (Continued)\n\n"
-        current_message += paper_info
+            current_message = f"# New ArXiv AI Research Papers (Continued)\n\n{paper_info}"
+        else:
+            current_message += paper_info
 
     if current_message:
         messages.append(current_message)
@@ -111,7 +114,7 @@ def send_discord_webhook(papers):
         try:
             response = requests.post(DISCORD_WEBHOOK_URL, json={"content": message})
             response.raise_for_status()
-            logging.info(f"Successfully sent message with {message.count('🆔')} papers")
+            logging.info(f"Successfully sent message with {message.count('🆔')} papers. Character count: {len(message)}")
         except requests.RequestException as e:
             logging.error(f"Error sending Discord webhook: {e}")
             if hasattr(e, 'response') and e.response is not None:
