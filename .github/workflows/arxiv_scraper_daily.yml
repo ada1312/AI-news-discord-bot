@@ -26,5 +26,5 @@ jobs:
     - name: Run ArXiv scraper
       env:
         BASE_URL: ${{ secrets.BASE_URL }}
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NEW_RESEARCH_CHANNEL_ID }}
+        DICORD_NEW_RESEARCH_CHANNEL_ID: ${{ secrets.DICORD_NEW_RESEARCH_CHANNEL_ID }}
       run: python AI_paper.py
