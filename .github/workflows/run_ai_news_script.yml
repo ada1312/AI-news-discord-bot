@@ -54,7 +54,7 @@ jobs:
         # Check if discord_news_bot.py exists
         if [ -f "discord_news_bot.py" ]; then
           echo "discord_news_bot.py found, running script"
-          python madiscord_news_botin.py
+          python discord_news_bot.py
         else
           echo "Error: discord_news_bot.py not found"
           echo "Python files in the current directory:"
