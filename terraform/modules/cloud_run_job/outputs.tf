@@ -1,7 +1,15 @@
-output "cloud_run_job1_name" {
-  value = google_cloud_run_v2_job.job1.name
+output "job_name" {
+  value = google_cloud_run_v2_job.job.name
 }
 
-output "cloud_run_job2_name" {
-  value = google_cloud_run_v2_job.job2.name
+output "job_id" {
+  value = google_cloud_run_v2_job.job.id
+}
+
+output "scheduler_job_name" {
+  value = google_cloud_scheduler_job.job_scheduler.name
+}
+
+output "scheduler_job_id" {
+  value = google_cloud_scheduler_job.job_scheduler.id
 }

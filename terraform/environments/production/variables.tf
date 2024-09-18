@@ -2,6 +2,10 @@ variable "project_id" {
   type = string
 }
 
+variable "region" {
+  type = string
+}
+
 variable "discord_webhook_url" {
   type = string
 }
@@ -15,9 +19,5 @@ variable "base_url" {
 }
 
 variable "discord_new_research_channel_id" {
-  type = string
-}
-
-variable "region" {
   type = string
 }

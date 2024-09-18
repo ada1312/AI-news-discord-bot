@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install required packages
+RUN pip install --no-cache-dir requests beautifulsoup4 python-dotenv
+
+# Copy the script
+COPY AI_paper.py .
+
+# Copy the .env file (make sure to add this to .gitignore)
+COPY .env .
+
+# Run the script
+CMD ["python", "AI_paper.py"]

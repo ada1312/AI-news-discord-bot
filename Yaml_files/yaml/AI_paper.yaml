@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: discord-daily-arxiv-bot
+spec:
+  schedule: "0 9 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: discord-daily-arxiv-bot
+            image: gcr.io/container-testing-381309/discord-daily-arxiv-bot:latest
+            env:
+            - name: BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: arxiv-secrets
+                  key: base-url
+            - name: DISCORD_NEW_RESEARCH_CHANNEL_ID
+              valueFrom:
+                secretKeyRef:
+                  name: arxiv-secrets
+                  key: discord-new-research-channel-id
+          restartPolicy: OnFailure
