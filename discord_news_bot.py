@@ -24,7 +24,7 @@ load_dotenv()
 
 # Get API keys from environment variables
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
-DISCORD_WEBHOOK_URL = "os.getenv('DISCORD_WEBHOOK_URL')"
+DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
 
 # Specify the news sources and keywords we want
 ALLOWED_SOURCES = ['Forbes', 'TechCrunch', 'Wired', 'MIT Technology Review', 'VentureBeat']
