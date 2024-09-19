@@ -18,6 +18,8 @@ module "service_account" {
     "run.executions.cancel",
     "run.routes.invoke",
     "iam.serviceAccounts.actAs", 
+    "roles/secretmanager.secretAccessor",
+    "roles/secretmanager.admin"
   ]
 }
 
@@ -57,8 +59,8 @@ module "cloud_run_job_1" {
   service_account_email = module.service_account.service_account_email
   job_timeout           = "3540s"
   scheduler_job_name    = "run-discord-ai-news-bot-job"
-  scheduler_schedule    = "0 12 * * *"
-  time_zone             = "Europe/Berlin"
+  scheduler_schedule    = "0 14 * * *"
+  time_zone             = "UTC"
   discord_webhook_url   = module.secret_manager.secret_ids["discord_webhook_url"]
   news_api_key          = module.secret_manager.secret_ids["news_api_key"]
   base_url              = module.secret_manager.secret_ids["base_url"]
@@ -76,8 +78,8 @@ module "cloud_run_job_2" {
   service_account_email = module.service_account.service_account_email
   job_timeout           = "3540s"
   scheduler_job_name    = "run-discord-daily-arxiv-bot-job"
-  scheduler_schedule    = "0 9 * * *"
-  time_zone             = "Europe/Berlin"
+  scheduler_schedule    = "0 11 * * *"
+  time_zone             = "UTC"
   discord_webhook_url   = module.secret_manager.secret_ids["discord_webhook_url"]
   news_api_key          = module.secret_manager.secret_ids["news_api_key"]
   base_url              = module.secret_manager.secret_ids["base_url"]

@@ -35,8 +35,7 @@ def extract_paper_info(dt, dd):
         paper['id'] = abstract_link.text.strip().replace('arXiv:', '')
         paper['abstract_link'] = f"https://arxiv.org/abs/{paper['id']}"
         paper['pdf_link'] = f"https://arxiv.org/pdf/{paper['id']}.pdf"
-        paper['html_link'] = f"https://arxiv.org/html/{paper['id']}v1"
-        paper['other_formats_link'] = f"https://arxiv.org/format/{paper['id']}"
+
     
     # Extract title
     title_div = dd.find('div', {'class': 'list-title'})
@@ -84,14 +83,10 @@ def format_paper_info(paper):
     links = (
         f"[abstract](<{paper['abstract_link']}>) | "
         f"[pdf](<{paper['pdf_link']}>) | "
-        f"[html](<{paper['html_link']}>) | "
-        f"[other](<{paper['other_formats_link']}>)"
     )
     return (
         f"📄 **{paper['title']}**\n"
-        f"🆔 `{paper['id']}`\n"
         f"🔗 {links}\n"
-        f"📚 {paper['subjects']}\n\n"
     )
 
 def send_discord_webhook(papers):
