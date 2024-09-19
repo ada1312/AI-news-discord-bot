@@ -1,7 +1,7 @@
 steps:
   # Step to build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/container-testing-381309/discord-daily-arxiv-bot:latest', '-f', 'Dockerfile.discord_news_bot', '.']
+    args: ['build', '-t', 'gcr.io/container-testing-381309/discord-daily-arxiv-bot:latest', '-f', 'Dockerfile.AI_paper', '.']
   
   # Step to push the image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'

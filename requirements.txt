@@ -1,6 +1,6 @@
 aiohttp
 asyncio
-dotenv
+python-dotenv
 discord
 requests
 beautifulsoup4
