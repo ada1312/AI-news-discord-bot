@@ -18,8 +18,12 @@ module "service_account" {
     "run.executions.cancel",
     "run.routes.invoke",
     "iam.serviceAccounts.actAs", 
-    "roles/secretmanager.secretAccessor",
-    "roles/secretmanager.admin"
+    "secretmanager.versions.access",
+    "secretmanager.versions.get",
+    "secretmanager.secrets.get",
+    "secretmanager.secrets.list",
+    "secretmanager.secrets.create",
+    "secretmanager.secrets.update"
   ]
 }
 

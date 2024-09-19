@@ -1,18 +1,18 @@
+# Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
+# Set the working directory in the container
 WORKDIR /app
 
-# Install required packages
-RUN pip install --no-cache-dir aiohttp discord.py python-dotenv nltk
+# Copy only the necessary files into the container
+COPY discord_news_bot.py .env ./
 
-# Copy the script
-COPY discord_news_bot.py .
+# Install required packages and download NLTK data
+RUN pip install --no-cache-dir aiohttp discord.py python-dotenv nltk && \
+    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 
-# Copy the .env file (make sure to add this to .gitignore)
-COPY .env .
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
 
-# Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
-
-# Run the script
+# Run the Discord bot script when the container launches
 CMD ["python", "discord_news_bot.py"]

@@ -1,15 +1,17 @@
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
+# Set the working directory in the container
 WORKDIR /app
+
+# Copy only the necessary files into the container
+COPY AI_paper.py .env ./
 
 # Install required packages
 RUN pip install --no-cache-dir requests beautifulsoup4 python-dotenv
 
-# Copy the script
-COPY AI_paper.py .
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
 
-# Copy the .env file (make sure to add this to .gitignore)
-COPY .env .
-
-# Run the script
+# Run AI_paper.py when the container launches
 CMD ["python", "AI_paper.py"]
