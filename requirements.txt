@@ -4,3 +4,4 @@ python-dotenv
 discord
 requests
 beautifulsoup4
+nltk

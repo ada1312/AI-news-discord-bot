@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install system dependencies and clean up in one layer
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && apt-get clean \
@@ -17,8 +17,20 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Set environment variable for NLTK data
+ENV NLTK_DATA /usr/local/share/nltk_data
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('punkt_tab')"
+
+# Verify NLTK data installation
+RUN python -c "import nltk; nltk.data.find('tokenizers/punkt_tab/english')"
+
 # Copy the contents of the src directory into the container
 COPY ./src .
+
+# Make sure all Python scripts are executable
+RUN chmod +x *.py
 
 # Run AI_paper.py when the container launches
 CMD ["python", "AI_paper.py"]
